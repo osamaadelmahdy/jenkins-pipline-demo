@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE_NAME = "my-flask-repo"
+        ECR_REGISTRY = "dkr.ecr.us-east-1.amazonaws.com"
+        ECR_REPOSITORY = "my-flask-repo"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+               git url: 'https://github.com/osamaadelmahdy/sprints_tasks.git', credentialsId: 'my_git_c', branch: 'main'
+            }
+        }
+        
+        stage('Logging into AWS ECR') {
+            
+            steps {
+              
+                    script {
+                        sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 895168343419.dkr.ecr.us-east-1.amazonaws.com"
+                    }
+                
+            }
+        }
+        
+        stage('Build Docker Image') {
+            
+            steps {
+                dir('final/flask-mysql/app') {
+                    script {
+                        def dockerImage = docker.build("${DOCKER_IMAGE_NAME}:latest")
+                        sh "docker tag my-flask-repo:latest 895168343419.dkr.ecr.us-east-1.amazonaws.com/my-flask-repo:latest"
+                        sh "docker push 895168343419.dkr.ecr.us-east-1.amazonaws.com/my-flask-repo:latest"
+                    }
+                }
+            }
+        }
+        
+    }
+}
