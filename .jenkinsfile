@@ -12,9 +12,7 @@ pipeline {
                git url: 'https://github.com/osamaadelmahdy/sprints_tasks.git', credentialsId: 'my_git_c', branch: 'main'
             }
         }
-        
         stage('Logging into AWS ECR') {
-            
             steps {
               
                     script {
@@ -23,11 +21,9 @@ pipeline {
                 
             }
         }
-        
         stage('Build Docker Image') {
-            
             steps {
-                dir('final/flask-mysql/app') {
+                dir('app') {
                     script {
                         def dockerImage = docker.build("${DOCKER_IMAGE_NAME}:latest")
                         sh "docker tag my-flask-repo:latest 895168343419.dkr.ecr.us-east-1.amazonaws.com/my-flask-repo:latest"
@@ -35,6 +31,15 @@ pipeline {
                     }
                 }
             }
+        }
+        stage('Deploy to EKS') {
+            steps {
+                script {
+                    sh 'kubectl apply -f kubernetes/deployment.yml  '
+                    sh 'kubectl apply -f kubernetes/statefulSet.yml  '
+                }
+            }
+            
         }
         
     }
